@@ -1,6 +1,14 @@
 @import "../util/mixin.styl"
+picker-panel-height = 430px
+picker-choose-height = 60px
+picker-wheel=168px
+picker-wheel-item-height=40px
+picker-mask-height=112px
+picker-margin-top = 109px
+picker-wheel-view-height= picker-panel-height - picker-wheel
 
 .picker
+
   display: none
   position: fixed
   top: 0
@@ -29,22 +37,23 @@
     z-index: 600
     bottom: 0
     width: 100%
-    height: 243px
+    height: picker-panel-height
     background: #fff
-    transform: translateY(243px)
-    -webkit-transform: translateY(243px)
+    transform: translateY(picker-panel-height)
+    -webkit-transform: translateY(picker-panel-height)
     transition: all 0.5s
     -webkit-transition: all 0.5s
+    border-radius: 10px 10px 0px 0px
     &.show
       transform: translateY(0)
       -webkit-transform: translateY(0)
     .picker-choose
       position: relative
-      height: 50px
+      height: picker-choose-height
       color: #878787
       font-size: 14px
       .picker-title
-        line-height: 50px
+        line-height: picker-choose-height
         font-size: 19px
         text-align: center
         color: #333
@@ -63,36 +72,82 @@
         position: absolute
         z-index: 10
         width: 100%
-        height: 68px
+        height: picker-mask-height
         pointer-events: none
         transform: translateZ(0)
         -webkit-transform: translateZ(0)
       .mask-top
         border-bottom-1px(#ccc)
         top: 0
-        gradient-from-bottom(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.8))
+        // gradient-from-bottom(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.8))
+        background: -webkit-gradient(linear, left top, left bottom, from(rgba(255, 255, 255, 0.4)), to(rgba(255, 255, 255, 0.8)));
       .mask-bottom
         border-top-1px(#ccc)
         bottom: 0
-        gradient-from-top(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.8))
+        // gradient-from-top(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.8))
+        background: -webkit-gradient(linear, left top, left bottom, from(rgba(255, 255, 255, 0.4)), to(rgba(255, 255, 255, 0.8)));
     .wheel-wrapper
       flex-box()
       padding: 0 10px
       .wheel
         flex()
-        height: 173px
+        height: picker-wheel-view-height
         overflow: hidden
         font-size: 21px
         .wheel-scroll
-          margin-top: 68px
-          line-height: 36px
+          margin-top: picker-margin-top
+          line-height: 46px
           .wheel-item
-            height: 36px
+            height: picker-wheel-item-height
             overflow: hidden
             white-space: nowrap
             color: #333
   .picker-footer
-    height: 20px
+    height: 50px
+    width 100%
+    display: flex
+    justify-content: space-evenly
+    align-items: center
+    margin-top: 15px
+    position:absolute
+    bottom: 30px
+    .cancel-bottom
+      width 100px
+      height: 45px
+      line-height:45px
+      background: #e95d5d
+      color: #fff
+      border-radius: 5px
+      display none
+      font-size: 17px
+    .confirm-bottom
+      // width 100px
+      // height: 2.6em
+      // line-height:2.6em
+      width 100px
+      height: 45px
+      line-height:45px
+      background: #067df3
+      color: #fff
+      border-radius: 5px
+      font-size: 17px
+  .picker-search-wrapper
+    height: 60px
+    display: none
+  .picker-search
+    width: 90%
+    height: 37px
+    margin: 10px auto
+    padding: 5px 10px
+    font-size: 16px
+    border: 1px solid #ccc
+    border-radius: 5px
+    box-sizing: border-box
+    outline: none
+  .picker-search::placeholder
+    color: #ccc
+
+  
 
 @media (-webkit-min-device-pixel-ratio: 1.5), (min-device-pixel-ratio: 1.5)
   .border-1px

@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <title>Picker by ustbhuangyi</title>
   <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
-  <link rel="stylesheet" type="text/css" href="stylesheets/reset.css">
-  <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
-  <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-  <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-  <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  <link rel="stylesheet" type="label/css" href="stylesheets/reset.css">
+  <link rel="stylesheet" type="label/css" href="stylesheets/normalize.css" media="screen">
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='label/css'>
+  <link rel="stylesheet" type="label/css" href="stylesheets/stylesheet.css" media="screen">
+  <link rel="stylesheet" type="label/css" href="stylesheets/github-light.css" media="screen">
 </head>
 <body>
 <section class="page-header">
@@ -57,120 +57,120 @@
 <script>
   var data1 = [
     {
-      text: '剧毒',
+      label: '剧毒',
       value: 1
     }, {
-      text: '蚂蚁',
+      label: '蚂蚁',
       value: 2
     },
     {
-      text: '幽鬼',
+      label: '幽鬼',
       value: 3
     },
     {
-      text: '主宰',
+      label: '主宰',
       value: 4
     },
     {
-      text: '卡尔',
+      label: '卡尔',
       value: 5
     },
     {
-      text: '宙斯',
+      label: '宙斯',
       value: 6
     },
     {
-      text: '巫医',
+      label: '巫医',
       value: 7
     }, {
-      text: '巫妖',
+      label: '巫妖',
       value: 8
     },
     {
-      text: '神谕者',
+      label: '神谕者',
       value: 9
     },
     {
-      text: '撼地神牛',
+      label: '撼地神牛',
       value: 10
     },
     {
-      text: '蓝胖子',
+      label: '蓝胖子',
       value: 11
     },
     {
-      text: '水晶室女',
+      label: '水晶室女',
       value: 12
     },
     {
-      text: '莉娜',
+      label: '莉娜',
       value: 13
     },
     {
-      text: '斯拉克',
+      label: '斯拉克',
       value: 14
     },
     {
-      text: '斯拉达',
+      label: '斯拉达',
       value: 15
     }
   ];
 
   var data2 = [
     {
-      text: '输出',
+      label: '输出',
       value: 'a'
     }, {
-      text: '控制',
+      label: '控制',
       value: 'b'
     },
     {
-      text: '核心',
+      label: '核心',
       value: 'c'
     },
     {
-      text: '爆发',
+      label: '爆发',
       value: 'd'
     },
     {
-      text: '辅助',
+      label: '辅助',
       value: 'e'
     },
     {
-      text: '打野',
+      label: '打野',
       value: 'f'
     },
     {
-      text: '逃生',
+      label: '逃生',
       value: 'g'
     }, {
-      text: '先手',
+      label: '先手',
       value: 'h'
     },
   ];
 
   var data3 = [
     {
-      text: '梅肯',
+      label: '梅肯',
       value: 's'
     }, {
-      text: '秘法鞋',
+      label: '秘法鞋',
       value: 'ss'
     },
     {
-      text: '假腿',
+      label: '假腿',
       value: 'sss'
     },
     {
-      text: '飞鞋',
+      label: '飞鞋',
       value: 'ssss'
     },
     {
-      text: '辉耀',
+      label: '辉耀',
       value: 'sssss'
     },
     {
-      text: '金箍棒',
+      label: '金箍棒',
       value: 'ssssss'
     }
   ];
@@ -185,7 +185,7 @@
   });
 
   picker1.on('picker.select', function (selectedVal, selectedIndex) {
-    picker1El.innerText = data1[selectedIndex[0]].text;
+    picker1El.innerText = data1[selectedIndex[0]].label;
   });
 
   picker1.on('picker.change', function (index, selectedIndex) {
@@ -201,7 +201,7 @@
   });
 
   picker2.on('picker.select', function (selectedVal, selectedIndex) {
-    picker2El.innerText = data1[selectedIndex[0]].text + ' ' + data2[selectedIndex[1]].text;
+    picker2El.innerText = data1[selectedIndex[0]].label + ' ' + data2[selectedIndex[1]].label;
   });
 
   picker2.on('picker.change', function (index, selectedIndex) {
@@ -218,7 +218,7 @@
   });
 
   picker3.on('picker.select', function (selectedVal, selectedIndex) {
-    picker3El.innerText = data1[selectedIndex[0]].text + ' ' + data2[selectedIndex[1]].text + ' ' + data3[selectedIndex[2]].text;
+    picker3El.innerText = data1[selectedIndex[0]].label + ' ' + data2[selectedIndex[1]].label + ' ' + data3[selectedIndex[2]].label;
   });
 
   picker3.on('picker.change', function (index, selectedIndex) {
@@ -249,7 +249,7 @@
   });
 
   picker4.on('picker.select', function (selectedVal, selectedIndex) {
-    picker4El.innerText = data[index][selectedIndex[0]].text;
+    picker4El.innerText = data[index][selectedIndex[0]].label;
   });
 
   picker4.on('picker.change', function (index, selectedIndex) {
@@ -269,6 +269,6 @@
   });
 
 </script>
-<script type="text/javascript" src="city/city.js"></script>
-<script type="text/javascript" src="city/index.js"></script>
+<script type="label/javascript" src="city/city.js"></script>
+<script type="label/javascript" src="city/index.js"></script>
 </html>

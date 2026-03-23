@@ -11,7 +11,7 @@ var checked = [0, 0, 0]; /* 已选选项 */
 function creatList(obj, list){
   obj.forEach(function(item, index, arr){
   var temp = new Object();
-  temp.text = item.name;
+  temp.label = item.name;
   temp.value = index;
   list.push(temp);
   })
@@ -22,25 +22,26 @@ creatList(city, first);
 if (city[selectedIndex[0]].hasOwnProperty('sub')) {
   creatList(city[selectedIndex[0]].sub, second);
 } else {
-  second = [{text: '', value: 0}];
+  second = [{label: '', value: 0}];
 }
 
 if (city[selectedIndex[0]].sub[selectedIndex[1]].hasOwnProperty('sub')) {
   creatList(city[selectedIndex[0]].sub[selectedIndex[1]].sub, third);
 } else {
-  third = [{text: '', value: 0}];
+  third = [{label: '', value: 0}];
 }
+console.log(selectedIndex);
 
 var picker = new Picker({
 	data: [first, second, third],
-  selectedIndex: selectedIndex,
-	title: '地址选择'
+  selectedIndex: [1,0,0],
+	title: ''
 });
 
 picker.on('picker.select', function (selectedVal, selectedIndex) {
-  var text1 = first[selectedIndex[0]].text;
-  var text2 = second[selectedIndex[1]].text;
-  var text3 = third[selectedIndex[2]] ? third[selectedIndex[2]].text : '';
+  var text1 = first[selectedIndex[0]].label;
+  var text2 = second[selectedIndex[1]].label;
+  var text3 = third[selectedIndex[2]] ? third[selectedIndex[2]].label : '';
 
 	nameEl.innerText = text1 + ' ' + text2 + ' ' + text3;
 });
@@ -64,12 +65,12 @@ picker.on('picker.change', function (index, selectedIndex) {
       if (secondCity.hasOwnProperty('sub')) {
         creatList(secondCity.sub, third);
       } else {
-        third = [{text: '', value: 0}];
+        third = [{label: '', value: 0}];
         checked[2] = 0;
       }
     } else {
-      second = [{text: '', value: 0}];
-      third = [{text: '', value: 0}];
+      second = [{label: '', value: 0}];
+      third = [{label: '', value: 0}];
       checked[1] = 0;
       checked[2] = 0;
     }
@@ -90,7 +91,7 @@ picker.on('picker.change', function (index, selectedIndex) {
       picker.refillColumn(2, third);
       picker.scrollColumn(2, 0)
     } else {
-      third = [{text: '', value: 0}];
+      third = [{label: '', value: 0}];
       checked[2] = 0;
       picker.refillColumn(2, third);
       picker.scrollColumn(2, 0)

@@ -1,11 +1,14 @@
 <div class="picker">
   <div class="picker-mask mask-hook"></div>
   <div class="picker-panel panel-hook">
-    <div class="picker-choose choose-hook">
-      <span class="cancel cancel-hook">取消</span>
-      <span class="confirm confirm-hook">确定66</span>
-      <h1 class="picker-title">{{title}}</h1>
-    </div>
+  <div class="picker-choose choose-hook">
+  <span class="cancel cancel-hook">关闭</span> 
+      {{!-- <span class="confirm confirm-hook">确定</span> --}}
+      <h1 class="picker-title">{{title}}</h1> 
+  </div>  
+    <div class="picker-search-wrapper">
+      <input placeholder="请输入搜索内容"  class="picker-search value-hook"/>
+    </div> 
     <div class="picker-content">
       <div class="mask-top border-1px"></div>
       <div class="mask-bottom border-1px"></div>
@@ -14,13 +17,16 @@
           <div class="wheel wheel-hook">
             <ul class="wheel-scroll wheel-scroll-hook">
               {{#each this}}
-                <li class="wheel-item" data-val="{{value}}">{{text}}</li>
+                <li class="wheel-item" data-val="{{value}}">{{label}}</li>
               {{/each}}
             </ul>
           </div>
         {{/each}}
       </div>
     </div>
-    <div class="picker-footer footer-hook"></div>
+    <div class="picker-footer footer-hook">
+       <span class="cancel-bottom cancel-hook-bottom">取消选择</span>
+      <span class="confirm-bottom confirm-hook">确定</span> 
+    </div> 
   </div>
 </div>

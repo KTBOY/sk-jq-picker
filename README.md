@@ -8,10 +8,7 @@
 - 支持动态更新每列的数据
 
 ## 依赖（无
-~~picker依赖[zepto](http://zeptojs.com/)和[gmu](http://gmu.baidu.com/)；
-**注意**:gmu.js请使用demo里的[gmu.js](https://github.com/ustbhuangyi/picker/blob/master/demo/gmu.js)，gmu的基础库，和官网的略有不同。~~
 
-1.x 版本不再依赖任何 3 方库，原生 JS 实现，可以直接使用
 
 ## 如何使用
 
@@ -147,6 +144,7 @@ JS 部分：
 
    
 
+
 ### options
 options.title  (String)
 
@@ -203,7 +201,7 @@ picker的源码是基于webpack构建的
 
 首先，clone项目源码
 ```bash
-git clone https://github.com/ustbhuangyi/picker.git
+git clone https://github.com/KTBOY/sk-jq-picker.git
 ```
 
 安装依赖
@@ -219,4 +217,7 @@ npm run dev
 打开浏览器访问如下地址, 查看效果
 
 > localhost:9090
+
+
+npm run build  打包
 
