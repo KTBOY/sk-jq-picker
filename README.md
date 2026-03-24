@@ -2,6 +2,7 @@
 [![npm](https://img.shields.io/npm/v/better-picker.svg?style=flat-square)](https://www.npmjs.com/package/better-picker)
 
 移动端最好用的的筛选器组件，高仿 ios 的 UIPickerView ，非常流畅的体验。
+![Uploading 录屏_20260324_111805.gif…]()
 
 ## Fetures
 - 支持单列、多列选择
