@@ -1,4 +1,4 @@
-import BScroll from 'better-scroll';
+﻿import BScroll from 'better-scroll';
 import EventEmitter from '../util/eventEmitter';
 import { extend } from '../util/lang';
 import {
@@ -11,6 +11,120 @@ import pickerTemplate from './picker.handlebars';
 import itemTemplate from './item.handlebars';
 import './picker.styl';
 
+const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+const debounce = (fn, wait = 120) => {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(null, args), wait);
+  };
+};
+
+class VirtualWheel {
+  constructor({
+    wheelEl,
+    data,
+    selectedIndex = 0,
+    windowSize = 80, // 显示条数
+    bufferSize = 5  // 缓存条数
+  }) {
+    this.wheelEl = wheelEl;
+    this.scrollEl = wheelEl.getElementsByClassName('wheel-scroll-hook')[0];
+    this.data = data || [];
+    this.windowSize = Math.max(windowSize, 20);
+    this.bufferSize = Math.min(bufferSize, Math.floor(this.windowSize / 3));
+    this.listeners = { scrollEnd: [] };
+    this.selectedIndex = clamp(selectedIndex, 0, Math.max(this.data.length - 1, 0));
+    this._offset = 0;
+    this.isVirtual = true;
+
+    this._renderWindow(this.selectedIndex);
+    this.bs = new BScroll(wheelEl, {
+      wheel: {
+        selectedIndex: this.selectedIndex - this._offset,
+        wheelWrapperClass: 'wheel-scroll',
+        wheelItemClass: 'wheel-item'
+      },
+      observeDOM: false
+    });
+
+    this.bs.on('scrollEnd', () => {
+      const relativeIndex = this.bs.getSelectedIndex();
+      const globalIndex = clamp(this._offset + relativeIndex, 0, Math.max(this.data.length - 1, 0));
+      this.selectedIndex = globalIndex;
+      this._maybeShiftWindow();
+      this.listeners.scrollEnd.forEach(fn => fn());
+    });
+  }
+
+  _renderWindow(targetIndex) {
+    const source = this.data.length ? this.data : [{ label: '', value: null }];
+    const maxStart = Math.max(source.length - this.windowSize, 0);
+    this._offset = clamp(targetIndex - Math.floor(this.windowSize / 2), 0, maxStart);
+    const slice = source.slice(this._offset, this._offset + this.windowSize);
+    this.scrollEl.innerHTML = itemTemplate(slice);
+  }
+
+  _maybeShiftWindow() {
+    const lower = this._offset + this.bufferSize;
+    const upper = this._offset + this.windowSize - this.bufferSize - 1;
+    if (this.selectedIndex < lower || this.selectedIndex > upper) {
+      this._renderWindow(this.selectedIndex);
+      this.bs.refresh();
+      this.bs.wheelTo(this.selectedIndex - this._offset, 0);
+    }
+  }
+
+  on(name, cb) {
+    if (name === 'scrollEnd') {
+      this.listeners.scrollEnd.push(cb);
+    } else {
+      this.bs.on(name, cb);
+    }
+  }
+
+  wheelTo(index, time = 0) {
+    const safeIndex = clamp(index, 0, Math.max(this.data.length - 1, 0));
+    this._renderWindow(safeIndex);
+    this.bs.refresh();
+    this.bs.wheelTo(safeIndex - this._offset, time);
+    this.selectedIndex = safeIndex;
+  }
+
+  refresh() {
+    this.bs.refresh();
+  }
+
+  enable() {
+    this.bs.enable();
+  }
+
+  disable() {
+    this.bs.disable();
+  }
+
+  getSelectedIndex() {
+    return this.selectedIndex;
+  }
+
+  updateData(data, targetIndex = 0) {
+    this.data = data || [];
+    const safeTarget = clamp(targetIndex, 0, Math.max(this.data.length - 1, 0));
+    this._renderWindow(safeTarget);
+    this.bs.refresh();
+    this.bs.wheelTo(safeTarget - this._offset, 0);
+    this.selectedIndex = safeTarget;
+    return safeTarget;
+  }
+
+  destroy() {
+    if (this.bs && typeof this.bs.destroy === 'function') {
+      this.bs.destroy();
+    }
+    this.listeners = { scrollEnd: [] };
+  }
+}
+
 export default class Picker extends EventEmitter {
   constructor(options) {
     super();
@@ -22,20 +136,34 @@ export default class Picker extends EventEmitter {
       showCls: 'show',
       cancel: false,
       panelHeight: '356px', // 未完善的字段
-      search: true
+      search: true,
+      virtualThreshold: 800,
+      virtualWindow: 80,
+      virtualBuffer: 20,
+      searchDebounce: 120
     };
 
     extend(this.options, options);
 
     this.data = this.options.data;
+    this.useVirtualFlags = this.data.map(list => Array.isArray(list) && list.length > this.options.virtualThreshold);
+    const renderData = this.data.map((column, idx) => {
+      if (!Array.isArray(column)) {
+        return [];
+      }
+      if (this.useVirtualFlags[idx]) {
+        const windowSize = Math.min(this.options.virtualWindow, column.length);
+        return column.slice(0, windowSize);
+      }
+      return column;
+    });
     this.pickerEl = createDom(pickerTemplate({
-      data: this.data,
+      data: renderData,
       title: this.options.title
 
     }));
 
     document.body.appendChild(this.pickerEl);
-    // 根据传入参数设置 CSS 变量（支持数字或字符串）
     //  this._applyHeightOptions(this.options);
     this.maskEl = this.pickerEl.getElementsByClassName('mask-hook')[0];
     this.wheelEl = this.pickerEl.getElementsByClassName('wheel-hook');
@@ -64,7 +192,7 @@ export default class Picker extends EventEmitter {
 
     root.style.setProperty('--picker-panel-height', panelH);
 
-    // 如果 wheels 已初始化，刷新它们以适配新高度
+
     if (this.wheels && this.wheels.length) {
       for (let i = 0; i < this.wheels.length; i++) {
         try { this.wheels[i].refresh(); } catch (e) { }
@@ -99,44 +227,51 @@ export default class Picker extends EventEmitter {
     this._bindEvent();
   }
   _handleSearch(searchValue) {
-    if (!searchValue.trim()) {
+    const value = searchValue.trim();
+    if (!value) {
+      this._resetData();
       return;
     }
 
-    const searchLower = searchValue.toLowerCase();
+    const searchLower = value.toLowerCase();
 
     // 按照优先级搜索：先搜省，再搜市，再搜区
     for (let level = 0; level < this.data.length; level++) {
-      const matchingItemIndex = this.data[level].findIndex(item => {
+      const column = Array.isArray(this.data[level]) ? this.data[level] : [];
+      const matchingItemIndex = column.findIndex(item => {
         return item.label && item.label.toLowerCase().includes(searchLower);
       });
 
       if (matchingItemIndex !== -1) {
-        // 滚动到匹配的位置
+         // 滚动到匹配的位置
         this._scrollToPosition(level, matchingItemIndex);
 
-        // 如果是第一级匹配，可能需要触发联动更新
-        if (level === 0) {
-          // 触发 change 事件以更新联动数据
-          if (this.wheels && this.wheels[0]) {
-            // 这会触发 _bindEvent 中注册的 scrollEnd 回调
-            this.wheels[0].refresh(); // 确保滚动生效
-          }
-        }
       }
+    }
+  }
+
+  _resetData() {
+    for (let i = 0; i < this.data.length; i++) {
+      const column = Array.isArray(this.data[i]) ? this.data[i] : [];
+      const maxIndex = Math.max(column.length - 1, 0);
+      const targetIndex = clamp(this.selectedIndex[i] || 0, 0, maxIndex);
+      this._scrollToPosition(i, targetIndex);
     }
   }
 
   _scrollToPosition(levelIndex, itemIndex) {
     // 检查轮子是否已初始化
     if (this.wheels && this.wheels[levelIndex]) {
-      // 使用 better-scroll 的 wheelTo 方法滚动到指定位置
+      const column = Array.isArray(this.data[levelIndex]) ? this.data[levelIndex] : [];
+      const maxIndex = Math.max(column.length - 1, 0);
+      const safeIndex = clamp(itemIndex, 0, maxIndex);
+  // 使用 better-scroll 的 wheelTo 方法滚动到指定位置
       //  this.wheels[levelIndex].refresh();
-      this.wheels[levelIndex].wheelTo(itemIndex, 0);
+      this.wheels[levelIndex].wheelTo(safeIndex, 0);
 
       // 更新选中状态
       if (this.selectedIndex) {
-        this.selectedIndex[levelIndex] = itemIndex;
+        this.selectedIndex[levelIndex] = safeIndex;
       }
     }
   }
@@ -151,12 +286,13 @@ export default class Picker extends EventEmitter {
 
       let changed = false;
       for (let i = 0; i < this.data.length; i++) {
+        const column = Array.isArray(this.data[i]) ? this.data[i] : [];
         let index = this.wheels[i].getSelectedIndex();
         this.selectedIndex[i] = index;
 
         let value = null;
-        if (this.data[i].length) {
-          value = this.data[i][index].value;
+        if (column.length) {
+          value = column[index] && column[index].value;
         }
         if (this.selectedVal[i] !== value) {
           changed = true;
@@ -188,10 +324,10 @@ export default class Picker extends EventEmitter {
     });
 
     if (this.pickerSearchEl) {
-      addEvent(this.pickerSearchEl, 'input', (e) => {
-        console.log(e.target.value);
+      const triggerSearch = debounce((val) => this._handleSearch(val), this.options.searchDebounce);
 
-        this._handleSearch(e.target.value);
+      addEvent(this.pickerSearchEl, 'input', (e) => {
+        triggerSearch(e.target.value || '');
       });
 
       addEvent(this.pickerSearchEl, 'keyup', (e) => {
@@ -203,16 +339,35 @@ export default class Picker extends EventEmitter {
   }
 
   _createWheel(wheelEl, i) {
-    this.wheels[i] = new BScroll(wheelEl[i], {
-      wheel: true,
-      rotate: 8,
-      selectedIndex: this.selectedIndex[i]
-    });
+    const columnData = Array.isArray(this.data[i]) ? this.data[i] : [];
+    const useVirtual = this.useVirtualFlags && this.useVirtualFlags[i];
+    const selectedIndex = clamp(this.selectedIndex[i] || 0, 0, Math.max(columnData.length - 1, 0));
+
+    if (useVirtual) {
+      this.wheels[i] = new VirtualWheel({
+        wheelEl: wheelEl[i],
+        data: columnData,
+        selectedIndex,
+        windowSize: this.options.virtualWindow,
+        bufferSize: this.options.virtualBuffer
+      });
+    } else {
+      this.wheels[i] = new BScroll(wheelEl[i], {
+        wheel: {
+          selectedIndex,
+          wheelWrapperClass: 'wheel-scroll',
+          wheelItemClass: 'wheel-item',
+          rotate: 8
+        },
+        observeDOM: false
+      });
+    }
+
     ((index) => {
       this.wheels[index].on('scrollEnd', () => {
         let currentIndex = this.wheels[index].getSelectedIndex();
-        if (this.selectedIndex[i] !== currentIndex) {
-          this.selectedIndex[i] = currentIndex;
+        if (this.selectedIndex[index] !== currentIndex) {
+          this.selectedIndex[index] = currentIndex;
           this.trigger('picker.change', index, currentIndex);
         }
       });
@@ -260,24 +415,51 @@ export default class Picker extends EventEmitter {
     let scrollEl = this.scrollEl[index];
     let wheel = this.wheels[index];
     if (scrollEl && wheel) {
-      let oldData = this.data[index];
-      this.data[index] = data;
-      scrollEl.innerHTML = itemTemplate(data);
+      let oldData = this.data[index] || [];
+      const nextData = Array.isArray(data) ? data : [];
+      this.data[index] = nextData;
+      this.useVirtualFlags[index] = Array.isArray(nextData) && nextData.length > this.options.virtualThreshold;
 
-      let selectedIndex = wheel.getSelectedIndex();
+      let selectedIndex = typeof wheel.getSelectedIndex === 'function' ? wheel.getSelectedIndex() : 0;
       let dist = 0;
-      if (oldData.length) {
-        let oldValue = oldData[selectedIndex].value;
-        for (let i = 0; i < data.length; i++) {
-          if (data[i].value === oldValue) {
-            dist = i;
-            break;
-          }
+      if (oldData.length && nextData.length) {
+        const oldItem = oldData[selectedIndex];
+        const oldValue = oldItem && oldItem.value;
+        if (oldValue !== undefined) {
+          const matchIndex = nextData.findIndex(item => item.value === oldValue);
+          dist = matchIndex === -1 ? 0 : matchIndex;
         }
       }
+
+      const shouldUseVirtual = this.useVirtualFlags[index];
+      const isVirtual = wheel.isVirtual === true;
+
+      if (shouldUseVirtual && !isVirtual) {
+        if (typeof wheel.destroy === 'function') {
+          wheel.destroy();
+        } else if (wheel.bs && typeof wheel.bs.destroy === 'function') {
+          wheel.bs.destroy();
+        }
+        this.wheels[index] = new VirtualWheel({
+          wheelEl: this.wheelEl[index],
+          data: nextData,
+          selectedIndex: dist,
+          windowSize: this.options.virtualWindow,
+          bufferSize: this.options.virtualBuffer
+        });
+        this.selectedIndex[index] = dist;
+        return dist;
+      }
+
+      if (typeof wheel.updateData === 'function') {
+        dist = wheel.updateData(nextData, dist);
+      } else {
+        scrollEl.innerHTML = itemTemplate(nextData);
+        wheel.refresh();
+        wheel.wheelTo(dist);
+      }
+
       this.selectedIndex[index] = dist;
-      wheel.refresh();
-      wheel.wheelTo(dist);
       return dist;
     }
   }
@@ -294,10 +476,13 @@ export default class Picker extends EventEmitter {
   }
 
   scrollColumn(index, dist) {
-    console.log(index, dist);
-
     let wheel = this.wheels[index];
-    console.log(wheel);
-    wheel.wheelTo(dist);
+    if (wheel) {
+      const column = Array.isArray(this.data[index]) ? this.data[index] : [];
+      const maxIndex = Math.max(column.length - 1, 0);
+      const safeDist = clamp(dist, 0, maxIndex);
+      wheel.wheelTo(safeDist);
+    }
   }
 }
+
